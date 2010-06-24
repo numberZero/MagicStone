@@ -2,12 +2,13 @@ program MagicStone;
 
 uses
   Forms,
-  MagicStone_Form_Main in 'MagicStone_Form_Main.pas' {Form1};
+  MagicStone_FormMain in 'MagicStone_FormMain.pas' {FormMain},
+  MagicStone_UnitMain in 'MagicStone_UnitMain.pas';
 
 {$R *.res}
 
 begin
   Application.Initialize;
-  Application.CreateForm(TForm1, Form1);
+  Application.CreateForm(TFormMain, FormMain);
   Application.Run;
 end.
