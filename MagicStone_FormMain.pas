@@ -6,9 +6,8 @@ USES Windows, Messages, SysUtils, Variants, Classes, Graphics, Controls, Forms,
  Dialogs, ExtCtrls, DIB, DirectX, DXClass, Math, DXDraws;
 
 TYPE TFormMain = CLASS(TForm)
-  Panel1 : TPanel;
   DXT : TDXTimer;
-  DXD : TDXDraw;
+    DXD: TDXDraw;
   PROCEDURE Initialize(Sender : TObject);
   PROCEDURE DXTTimer(Sender : TObject; Lag : Integer);
   PROCEDURE Regenerate(Sender : TObject);
@@ -18,32 +17,23 @@ VAR FormMain : TFormMain;
  
 IMPLEMENTATION
 
-USES MagicStones2_UnitMain;
+USES MagicStones_UnitMain;
 
 {$R *.dfm}
-{DEFINE MoutionBlur_Image}
-{$DEFINE MoutionBlur_Object}
-{$DEFINE SmoothPoints}
 
 CONST ImageSize = 512;
  ImageSize2 = ImageSize DIV 2;
  PointsCount = 1024;
  PointsMax = PointsCount - 1;
-{$IFDEF MoutionBlur_Image}
-//      ImageMoutionBlurDepth = 4;
-//      ImageMoutionBlurMax = ImageMoutionBlurDepth - 1;
-{$ENDIF}
-{$IFDEF MoutionBlur_Object}
  ObjectMoutionBlurDepth = 8;
  ObjectMoutionBlurMax = ObjectMoutionBlurDepth - 1;
-{$ENDIF}
- 
+
  MinVelA = Pi / 3000;
  MaxVelA = Pi / 2000;
  BasePosR = 192;
  BaseVelR = 0.00;
  VelRPerS = 0.0010;
- MaxPosH = 15;
+ MaxPosH = 45;
  MinVelH = 0.005;
  MaxVelH = 0.030;
  
@@ -65,14 +55,8 @@ TYPE TObj = RECORD
  TImageData = ARRAY[0..ImageSize - 1, 0..ImageSize - 1] OF Integer;
  
 VAR Points : ARRAY[0..PointsMax] OF TObj;
-{$IFDEF MoutionBlur_Image}
- IMBBuf : TDirectDrawSurface;
- Pixels2 : ^TImageData;
-{$ENDIF}
-{$IFDEF MoutionBlur_Object}
  OMBObjs : ARRAY[0..ObjectMoutionBlurMax, 0..PointsMax] OF TOMBPoint;
  OMBIndex : Integer;
-{$ENDIF}
  Pic : TDIB;
  DDSD : TDDSurfaceDesc;
  Pixels : ^TImageData;
@@ -80,9 +64,6 @@ VAR Points : ARRAY[0..PointsMax] OF TObj;
  TimeBeforeRestart : Integer;
  
 PROCEDURE TFormMain.Initialize;
-{$IFDEF MoutionBlur_Image}
-VAR Index : Integer;
-{$ENDIF}
 BEGIN
  RandomIze;
  DXD.Surface.Fill(0);
@@ -94,11 +75,6 @@ BEGIN
    Font.Size := 10;
    Font.Color := clWhite;
   END;
-{$IFDEF MoutionBlur_Image}
- IMBBuf := TDirectDrawSurface.Create(DXD.DDraw);
- IMBBuf.SetSize(ImageSize, ImageSize);
- IMBBuf.SystemMemory := True;
-{$ENDIF}
  Pic := TDIB.Create;
  Pic.SetSize(ImageSize, ImageSize, 32);
  Regenerate(NIL);
@@ -177,16 +153,13 @@ VAR Src1 : TRGBQuad;
 VAR I, J : Integer;
  X, Y : Integer;
  Color : Integer;
-{$IFDEF MoutionBlur_Object}
- 
+
  PROCEDURE DrawOMBImage(ObjsIndex, Index : Integer);
- VAR{$IFDEF SmoothPoints}A, B, {$ENDIF}I : Integer;
+ VAR A, B, I : Integer;
  BEGIN
   Opac := Round((1 - IntPower(Index / ObjectMoutionBlurMax, 2)) * 255);
-{$IFDEF SmoothPoints}
   A := Opac * $A0 SHR 8;
   B := Opac * $60 SHR 8;
-{$ENDIF}
   FOR I := 0 TO PointsMax DO
    WITH OMBObjs[ObjsIndex, I] {, Points[I]} DO
     BEGIN
@@ -194,7 +167,6 @@ VAR I, J : Integer;
       Continue;
      IF (Y < 1) OR (Y > (ImageSize - 2)) THEN
       Continue;
-{$IFDEF SmoothPoints}
      Pixels[X, Y] := AddTransparentColor(Pixels[X, Y], Color);
      Pixels[X - 1, Y] := AddTransparentColor2(Pixels[X - 1, Y], Color, A);
      Pixels[X + 1, Y] := AddTransparentColor2(Pixels[X + 1, Y], Color, A);
@@ -208,17 +180,9 @@ VAR I, J : Integer;
       B);
      Pixels[X + 1, Y + 1] := AddTransparentColor2(Pixels[X + 1, Y + 1], Color,
       B);
-{$ELSE}
-     Pixels[X, Y] := AddTransparentColor(Pixels[X, Y], Color);
-     Pixels[X - 1, Y] := AddTransparentColor(Pixels[X - 1, Y], Color);
-     Pixels[X + 1, Y] := AddTransparentColor(Pixels[X + 1, Y], Color);
-     Pixels[X, Y - 1] := AddTransparentColor(Pixels[X, Y - 1], Color);
-     Pixels[X, Y + 1] := AddTransparentColor(Pixels[X, Y + 1], Color);
-{$ENDIF}
     END;
  END;
-{$ENDIF}
- 
+
 LABEL Finish;
 BEGIN
  Inc(LagCount, Lag * Integer(DXT.Interval));
@@ -234,10 +198,6 @@ BEGIN
    MessageDlg('Only 32bpp color mode supported', mtError, [mbOk], 0);
    Halt(1);
   END;
-{$IFDEF MoutionBlur_Image}
- Pixels2 := DDSD.lpSurface;
- IMBBuf.Lock(DDSD);
-{$ENDIF}
  Pixels := DDSD.lpSurface;
  FillChar(Pixels^, SizeOf(Pixels^), 0);
  FOR I := 0 TO PointsMax DO
@@ -258,7 +218,6 @@ BEGIN
     IF (Y < 1) OR (Y > (ImageSize - 2)) THEN
      Continue;
     Color := Make_RGB_From_H(PosH);
-{$IFDEF SmoothPoints}
     Pixels[X, Y] := Color;
     Pixels[X - 1, Y] := AddTransparentColor2(Pixels[X - 1, Y], Color, $A0);
     Pixels[X + 1, Y] := AddTransparentColor2(Pixels[X + 1, Y], Color, $A0);
@@ -272,20 +231,10 @@ BEGIN
      $60);
     Pixels[X + 1, Y + 1] := AddTransparentColor2(Pixels[X + 1, Y + 1], Color,
      $60);
-{$ELSE}
-    Pixels[X, Y] := Color;
-    Pixels[X - 1, Y] := Color;
-    Pixels[X + 1, Y] := Color;
-    Pixels[X, Y - 1] := Color;
-    Pixels[X, Y + 1] := Color;
-{$ENDIF}
-{$IFDEF MoutionBlur_Object}
     OMBObjs[OMBIndex, I].X := X;
     OMBObjs[OMBIndex, I].Y := Y;
     OMBObjs[OMBIndex, I].Color := Color;
-{$ENDIF}
    END;
-{$IFDEF MoutionBlur_Object}
  J := 0;
  FOR I := OMBIndex - 1 DOWNTO 0 DO
   BEGIN
@@ -300,30 +249,6 @@ BEGIN
  Inc(OMBIndex);
  IF OMBIndex = ObjectMoutionBlurDepth THEN
   OMBIndex := 0;
-{$ENDIF}
-{$IFDEF MoutionBlur_Image}
- ASM
-  PUSHAD
-  MOV ESI, Pixels
-  MOV EDI, Pixels2
-  MOV ECX, ImageSize * ImageSize * 2
-  CLD
- @@Loop:
-  LODSW
-  MOV EDX, [EDI]
-  SHR AL, 1
-  SHR DL, 1
-  ADD AL, DL
-  SHR AH, 1
-  SHR DH, 1
-  ADD AH, DH
-  STOSW
-  LOOP @@Loop
-  POPAD
- END;
-// Move(Pixels^, Pixels2^, ImageSize * ImageSize * 4);
- IMBBuf.UnLock;
-{$ENDIF}
  DXD.Surface.UnLock;
  LagCount := 0;
  Finish :

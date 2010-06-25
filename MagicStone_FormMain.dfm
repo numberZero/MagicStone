@@ -1,6 +1,6 @@
 object FormMain: TFormMain
-  Left = 243
-  Top = 129
+  Left = 389
+  Top = 220
   BorderIcons = [biSystemMenu, biMinimize]
   BorderStyle = bsSingle
   Caption = 'Magic Stones 2'
@@ -15,35 +15,23 @@ object FormMain: TFormMain
   OldCreateOrder = False
   PixelsPerInch = 120
   TextHeight = 16
-  object Panel1: TPanel
-    Left = 8
-    Top = 8
-    Width = 528
-    Height = 528
+  object DXD: TDXDraw
+    Left = 16
+    Top = 16
+    Width = 512
+    Height = 512
+    AutoInitialize = True
     AutoSize = True
-    BevelInner = bvLowered
-    BevelWidth = 3
-    BorderWidth = 2
-    Color = clBlack
+    Color = clBtnFace
+    Display.FixedBitCount = True
+    Display.FixedRatio = True
+    Display.FixedSize = False
+    Options = [doAllowReboot, doWaitVBlank, doSystemMemory, doCenter, doDirectX7Mode, doHardware, doSelectDriver]
+    SurfaceHeight = 512
+    SurfaceWidth = 512
+    OnInitialize = Initialize
     TabOrder = 0
-    object DXD: TDXDraw
-      Left = 8
-      Top = 8
-      Width = 512
-      Height = 512
-      AutoInitialize = True
-      AutoSize = True
-      Color = clBtnFace
-      Display.FixedBitCount = True
-      Display.FixedRatio = True
-      Display.FixedSize = False
-      Options = [doAllowReboot, doWaitVBlank, doSystemMemory, doCenter, doDirectX7Mode, doHardware, doSelectDriver]
-      SurfaceHeight = 512
-      SurfaceWidth = 512
-      OnInitialize = Initialize
-      TabOrder = 0
-      OnClick = Regenerate
-    end
+    OnClick = Regenerate
   end
   object DXT: TDXTimer
     ActiveOnly = True
